@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alignquant"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = ["torch>=2.7", "transformers>=5.0,<6", "safetensors>=0.4", "accelerate>=1", "ninja"]
+
+[tool.setuptools.packages.find]
+include = ["alignquant*"]
+
+[tool.setuptools.package-data]
+alignquant = ["data/*.json", "kernels/cuda/*.cu"]
