@@ -1,8 +1,10 @@
 # AlignQuant
 
-64×64 tile-aligned W4/W8 allocation, scales, and native execution with A8 activations.
-Requires Python 3.10+, CUDA toolkit, a C++ compiler, and CUTLASS headers. The current native kernel targets SM80.
-Use `ALIGNQUANT_CXX`, `ALIGNQUANT_CUDA_HOME`, and `TORCH_EXTENSIONS_DIR` to select the compiler, CUDA toolkit, and build-cache directory when needed.
+**Tile-Aligned Mixed-Precision Quantization for Efficient LLM Generation**
+
+AlignQuant uses 64×64 weight tiles as the common unit of precision allocation, scale sharing, packed storage, and GPU computation. Joint prefill/decode calibration scores loss-gradient-weighted W8-to-W4 projection-output changes and assigns W4 to the lowest-scoring 60% of tiles model-wide. Prefill and decode share one packed W4/W8 model with A8 activations and INT8 arithmetic.
+
+Requires Python 3.10+, an SM80 GPU, CUDA toolkit, a C++ compiler, and CUTLASS headers.
 
 ```bash
 pip install -e .
@@ -16,6 +18,6 @@ python -m alignquant.infer --model /path/to/model --artifact artifacts/model \
   --prompt "Explain quantization." --max-new-tokens 128
 ```
 
-`samples.jsonl`: 64 ordered JSON lines with `document` and `summary` strings (the reference corpus uses `alexfabbri/multi_news` training rows 544–607). Calibration tokenizes them, selects R5 transforms, constructs W4/W8 candidates, computes prefill/decode Fisher risk, and assigns the globally lowest-risk 60% of tiles to W4. It uses 24 prefill records and the first 24 sorted matched-prefix decode windows; temporary candidates are removed on exit.
+`samples.jsonl` contains 64 ordered records with `document` and `summary` strings. The commands select tile-aligned transforms, compute the joint precision map, pack the selected weights and scales, and generate text. The first inference compiles the CUDA extension.
 
-The default model preset is Llama-3.2-3B-Instruct. For another supported model, pass its `alignquant/data/*.json` file via `--preset`; the exact checkpoint revision is recorded there. To skip recalibration, pass that file directly to `alignquant.build --calibration`. Model weights and raw samples are not bundled. The first inference compiles the CUDA extension.
+The default preset is Llama-3.2-3B-Instruct. For Qwen3-4B, Ministral-3-8B, or Qwen3-14B, pass the corresponding `alignquant/data/*.json` to `calibrate --preset` and use the checkpoint revision recorded there. Bundled precision maps can also be used directly with `build --calibration`.
